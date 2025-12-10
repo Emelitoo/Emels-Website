@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>API-Dashboard — Emel</title>
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<!-- Highcharts -->
+<script src="https://code.highcharts.com/highcharts.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+:root{
+  --bg: #fbf7f5;
+  --panel: #fff6f5;
+  --card: #fffaf8;
+  --accent: #f6c7d6;
+  --accent-2: #f1dccc;
+  --muted: #8b7f7a;
+  --shadow: 0 10px 25px rgba(113, 90, 88, 0.09);
+}
+body{
+  background: linear-gradient(180deg, var(--bg), #fff9f8 120px);
+  font-family: "Poppins", sans-serif;
+  color: #4d3f3c;
+  font-size: 1.15rem;
+}
+.container { max-width: 1400px; }
+h2 { font-weight: 600; color: #3f2f2d; font-size: 2.2rem; }
+.topics{
+  background: linear-gradient(180deg, rgba(246,199,214,0.12), rgba(241,220,204,0.06));
+  border-radius: 20px; padding: 20px; box-shadow: var(--shadow);
+}
+.topic-row{
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 8px; border-radius: 14px;
+  transition: background 180ms, transform 120ms;
+  font-size: 1.05rem;
+}
+.topic-row:hover{ background: rgba(246,199,214,0.12); transform: translateY(-2px); }
+.btn-generate{
+  border-radius: 999px; padding: 10px 20px;
+  font-weight: 600; font-size: 1rem;
+  transition: transform 120ms, box-shadow 120ms;
+}
+.btn-primary{ background: linear-gradient(180deg, #f8aec0, #f6c7d6); border:none; color:#4a2d2b;}
+.btn-secondary{ background: linear-gradient(180deg, #f0d7c7, #f4e1d8); border:none; color:#4a2d2b;}
+.btn-success{ background: linear-gradient(180deg, #cfe7e8, #e9f6f6); border:none; color:#234242;}
+.btn-warning{ background: linear-gradient(180deg, #ffe5c7, #f7e1d0); border:none; color:#4a2d2b;}
+.btn-info{ background: linear-gradient(180deg, #efe3f0, #f6edf6); border:none; color:#4a2d2b;}
+.btn-formular{ background: linear-gradient(180deg, #f6d6cf, #f4e1dd); border:none; color:#4a2d2b;}
+
+.right-card{ background: var(--card); border-radius: 20px; padding: 40px; box-shadow: var(--shadow); min-height: 600px;}
+img#cat-img { max-width: 100%; border-radius: 16px; box-shadow: var(--shadow); }
+
+ul.station-list{ text-align:left; margin-top:10px; font-size: 1.05rem; }
+ul.station-list li{ margin-bottom:10px; }
+.station-card{ background:#fff6f5;border-radius:14px;box-shadow:0 4px 10px rgba(0,0,0,0.05); padding:1rem; cursor:pointer; }
+.distance-badge{ font-size:0.9rem; font-weight:500; background:rgba(246,199,214,0.2); color:#4a2d2b; padding:4px 8px; border-radius:6px; display:inline-block; }
+
+#plz-search-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+#plz-input { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; font-size: 1rem; }
+
+#place-input { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 8px; }
+</style>
+</head>
+
+<body>
+<div class="container py-5">
+<h2 class="text-center mb-4">API-Dashboard — Emel</h2>
+<div class="row gy-4">
+  <div class="col-lg-4">
+    <div class="topics">
+
+      <div class="topic-row mb-2">
+        <div class="flex-grow-1">Zufaelliges Katzenfoto</div>
+        <div style="width:140px"><button id="btn-cat" class="btn btn-primary btn-generate w-100">Generieren</button></div>
+      </div>
+
+      <div class="topic-row mb-2">
+        <div class="flex-grow-1">Aktuelles Wetter</div>
+        <div style="width:140px"><button id="btn-weather" class="btn btn-success btn-generate w-100">Generieren</button></div>
+      </div>
+
+      <div class="topic-row mb-2">
+        <div class="flex-grow-1">Bitcoin Preis</div>
+        <div style="width:140px"><button id="btn-btc" class="btn btn-secondary btn-generate w-100">Generieren</button></div>
+      </div>
+
+      <div class="topic-row mb-2">
+        <div class="flex-grow-1">Strom-Tankstellen</div>
+        <div style="width:140px"><button id="btn-stations" class="btn btn-warning btn-generate w-100">Generieren</button></div>
+      </div>
+
+      <div class="topic-row mb-2">
+        <div class="flex-grow-1">Kartenausschnitt</div>
+        <div style="width:140px"><button id="btn-map" class="btn btn-info btn-generate w-100">Generieren</button></div>
+      </div>
+
+      <!-- FORMULAR BUTTON -->
+      <div class="topic-row">
+        <div class="flex-grow-1">Bewerbungsformular</div>
+        <div style="width:140px"><button id="btn-formular" class="btn btn-formular btn-generate w-100">Oeffnen</button></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="right-card">
+
+      <!-- Katzen -->
+      <div id="content-cat" class="content-block d-none text-center">
+        <h5>Zufaelliges Katzenfoto</h5>
+        <img id="cat-img" src="" alt="Katzenbild" class="img-fluid my-3">
+      </div>
+
+      <!-- Wetter -->
+      <div id="content-weather" class="content-block d-none text-center">
+        <h5>Wettervorhersage Zuerich (5 Tage)</h5>
+        <div id="weather-chart" style="height:480px; margin-top:20px;"></div>
+      </div>
+
+      <!-- Bitcoin -->
+      <div id="content-btc" class="content-block d-none text-center">
+        <h5>Aktueller Bitcoin Preis</h5>
+        <div class="row my-4">
+          <div class="col"><div class="text-muted">CHF</div><div id="btc-chf" style="font-size:32px; font-weight:700">—</div></div>
+          <div class="col"><div class="text-muted">USD</div><div id="btc-usd" style="font-size:32px; font-weight:700">—</div></div>
+        </div>
+      </div>
+
+      <!-- Tankstellen -->
+      <div id="content-stations" class="content-block d-none text-start">
+        <h5>Strom-Tankstellen in deiner Naehe</h5>
+        <div id="plz-search-bar" class="d-none">
+          <input id="plz-input" type="text" placeholder="PLZ eingeben (z. B. 8004)">
+          <button id="btn-plz-search" class="btn btn-warning">Suchen</button>
+        </div>
+        <div id="stations-result" class="mt-3">Bitte klicken Sie auf „Generieren“.</div>
+      </div>
+
+      <!-- Karte -->
+      <div id="content-map" class="content-block d-none">
+        <h5>Kartenausschnitt</h5>
+        <div id="place-search-bar" style="margin-bottom:20px;">
+          <input id="place-input" type="text" placeholder="Ort eingeben (z.B. Zuerich)" class="form-control mb-2">
+          <button id="btn-place-search" class="btn btn-info w-100">Ort suchen</button>
+        </div>
+        <div id="map" style="height:500px;" class="my-3"></div>
+      </div>
+
+      <!-- FORMULAR -->
+      <div id="content-formular" class="content-block d-none text-start">
+        <h4 class="mb-3">Bewerbungsformular</h4>
+
+        <!-- WICHTIG: HIER DEIN WEBHOOK LINK -->
+        <form class="mt-3" method="POST" action="https://webhook.site/a7e659e3-a489-4cc6-924e-cbcfa0b65582" enctype="multipart/form-data">
+
+          <h5>Persoenliche Angaben</h5>
+          <div class="mb-3">
+            <label class="form-label">Geschlecht</label>
+            <select name="geschlecht" class="form-select">
+              <option>Weiblich</option>
+              <option>Maennlich</option>
+              <option>Divers</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Vorname</label>
+              <input name="vorname" type="text" class="form-control">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Name</label>
+              <input name="name" type="text" class="form-control">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Strasse und Nr.</label>
+            <input name="strasse" type="text" class="form-control">
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">PLZ</label>
+              <input name="plz" type="text" class="form-control">
+            </div>
+            <div class="col-md-8 mb-3">
+              <label class="form-label">Ort</label>
+              <input name="ort" type="text" class="form-control">
+            </div>
+          </div>
+
+          <h5>Kontakt</h5>
+          <div class="mb-3">
+            <label class="form-label">E-Mail</label>
+            <input name="email" type="email" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Handy-Nummer</label>
+            <input name="handy" type="tel" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Kontaktart</label>
+            <select name="kontaktart" class="form-select">
+              <option>E-Mail</option>
+              <option>Telefon</option>
+              <option>WhatsApp</option>
+            </select>
+          </div>
+
+          <h5>Weitere Informationen</h5>
+
+          <div class="mb-3">
+            <label class="form-label">Geburtsdatum</label>
+            <input name="geburtsdatum" type="date" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Motivationsschreiben</label>
+            <textarea name="motivation" class="form-control" rows="4"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Lebenslauf (PDF)</label>
+            <input name="lebenslauf" type="file" class="form-control" accept="application/pdf">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Portfolio Link</label>
+            <input name="portfolio" type="url" class="form-control">
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="checkDS" name="datenschutz">
+            <label for="checkDS" class="form-check-label">Ich akzeptiere die Datenschutzbestimmungen</label>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            📧 Bewerbung absenden
+          </button>
+
+        </form>
+      </div>
+
+      <div id="content-default" class="text-center py-5">
+        <p>Waehle links ein Thema und klicke auf <strong>Generieren</strong>.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const LAT = 47.3769, LON = 8.5417;
+
+function showBlock(id){
+  $(".content-block").addClass("d-none");
+  $("#content-default").addClass("d-none");
+  $("#" + id).removeClass("d-none");
+}
+
+// Katzen
+$("#btn-cat").click(function(){
+  $.getJSON("https://api.thecatapi.com/v1/images/search", function(data){
+    $("#cat-img").attr("src", data[0].url);
+    showBlock("content-cat");
+  });
+});
+
+// Wetter
+$("#btn-weather").click(function(){
+  $.getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=5&timezone=Europe/Zurich`,
+  function(data){
+    Highcharts.chart("weather-chart",{
+      title:{ text:"" },
+      xAxis:{ categories:data.daily.time },
+      yAxis:[
+        { title:{ text:"°C" } },
+        { title:{ text:"mm" }, opposite:true }
+      ],
+      series:[
+        { name:"Max Temp", data:data.daily.temperature_2m_max, type:"line" },
+        { name:"Min Temp", data:data.daily.temperature_2m_min, type:"line" },
+        { name:"Niederschlag", data:data.daily.precipitation_sum, type:"column", yAxis:1 }
+      ]
+    });
+    showBlock("content-weather");
+  });
+});
+
+// BTC
+$("#btn-btc").click(function(){
+  $.getJSON("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,chf",
+    function(data){
+      $("#btc-chf").text(data.bitcoin.chf + " CHF");
+      $("#btc-usd").text(data.bitcoin.usd + " USD");
+      showBlock("content-btc");
+    }
+  );
+});
+
+// Tankstellen Initialisierung
+$("#btn-stations").click(function(){
+  showBlock("content-stations");
+  $("#stations-result").html("Lade Daten...");
+  $("#plz-search-bar").removeClass("d-none");
+
+  $.getJSON("https://data.geo.admin.ch/ch.bfe.ladestellen-elektromobilitaet/data/ch.bfe.ladestellen-elektromobilitaet.json")
+    .done(function(data){
+      window.allStations = data.EVSEData.flatMap(d => d.EVSEDataRecord).map(r => {
+        const coords = r.GeoCoordinates?.Google?.split(" ");
+        return {
+          plz: String(r.Address?.PostalCode || r.Address?.ZIP || "").trim(),
+          name: r.ChargingStationNames?.[0]?.value || "Unbekannte Station",
+          street: r.Address?.Street || "",
+          coords
+        };
+      }).filter(s => s.coords && s.plz);
+      $("#stations-result").html("Bitte PLZ eingeben und suchen.");
+    })
+    .fail(() => $("#stations-result").html("Fehler beim Laden."));
+});
+
+// PLZ Suche
+$("#btn-plz-search").click(function(){
+  const plz = $("#plz-input").val().trim();
+  if(!plz){ $("#stations-result").html("Bitte PLZ eingeben."); return; }
+
+  const results = window.allStations.filter(s => s.plz === plz);
+
+  if(results.length === 0){
+    $("#stations-result").html("Keine Stationen gefunden.");
+    return;
+  }
+
+  let html = "<ul class='station-list'>";
+  for(const s of results){
+    html += `
+      <li class="station-card">
+        <strong>${s.name}</strong><br>
+        ${s.street}<br>
+        PLZ ${s.plz}
+      </li>`;
+  }
+  html += "</ul>";
+
+  $("#stations-result").html(html);
+});
+
+// Karte
+let map = null;
+$("#btn-map").click(function(){
+  showBlock("content-map");
+
+  if(!map){
+    map = L.map("map").setView([47.3769,8.5417], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19
+    }).addTo(map);
+  }
+});
+
+$("#btn-place-search").click(function(){
+  const place = $("#place-input").val().trim();
+  if(!place){ return; }
+
+  $.getJSON("https://nominatim.openstreetmap.org/search?format=json&q=" + place,
+    function(data){
+      if(data.length === 0){ alert("Ort nicht gefunden"); return; }
+      const lat = parseFloat(data[0].lat);
+      const lon = parseFloat(data[0].lon);
+      map.setView([lat, lon], 13);
+      L.marker([lat, lon]).addTo(map);
+    }
+  );
+});
+
+// Formular Block
+$("#btn-formular").click(function(){
+  showBlock("content-formular");
+});
+</script>
+
+</body>
+</html>
